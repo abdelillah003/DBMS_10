@@ -16,8 +16,8 @@
 % ----- Fill in your metadata -------------------------------
 \renewcommand{\thgaKurs}{Databases}
 \renewcommand{\thgaDatum}{Summer Term 2026}
-\newcommand{\authorName}{<<< Your name >>>}
-\newcommand{\projectTitle}{<<< Working title of your application >>>}
+\newcommand{\authorName}{Abdelillah Taleb}
+\newcommand{\projectTitle}{Hotel Booking Manager}
 
 \begin{document}
 \thispagestyle{empty}
@@ -50,8 +50,29 @@ file extension may be omitted. Keep the \texttt{\textbackslash caption} and the
 \section{Application domain and motivation}
 % ============================================================
 
-<<< Which application do you build and which problem does it solve? Who uses
-it, and for what? Add one or two concrete usage scenarios. >>>
+Hotel Booking Management System is a database-backed desktop
+application designed for managing room reservations in a small hotel.
+Instead of using spreadsheets or handwritten reservation books, all booking
+information is stored in a relational PostgreSQL database.
+
+The application is mainly used by hotel reception staff. It allows employees
+to manage guests, rooms, bookings and additional hotel services such as
+breakfast or parking. The system provides a structured and reliable way to
+store reservation data while maintaining data integrity through a relational
+database.
+
+A relational database is well suited for this application because bookings
+must always reference existing guests and rooms. Relationships between
+entities can be enforced using primary keys and foreign keys, preventing
+invalid or inconsistent data.
+
+The first usage scenario is the creation of a new reservation. The receptionist
+selects an available room for a given period, enters the guest information and
+creates a booking.
+
+The second usage scenario is managing an existing reservation. The receptionist
+can view booking details, add optional services such as breakfast or parking
+and update the booking status when the guest checks in or checks out.
 
 % ============================================================
 \section{Data model -- ER sketch}
@@ -61,45 +82,123 @@ it, and for what? Add one or two concrete usage scenarios. >>>
   \centering
   % Swap example-figure.jpg for your own file, e.g. er-sketch.jpg
   % (a photographed hand drawing is fine).
-  \includegraphics[width=0.85\linewidth]{example-figure.jpg}
-  \caption{ER sketch of the <<< domain >>> data model: entity types, key
-  attributes, relationships and cardinalities (at least one N:M).}
+  \includegraphics[width=0.85\linewidth]{er-sketch.jpg}
+  \caption{ER sketch of the Hotel Booking Manager data model, showing the
+   central entity types, their key attributes, relationships and cardinalities.}
   \label{fig:er}
 \end{figure}
 
-Figure~\ref{fig:er} shows <<< explain your ER model here: name the central
-entity types, the key attributes and the relationships, and point out the N:M
-relationship and its cardinalities. >>>
+Figure~\ref{fig:er} shows the ER model of the Hotel Booking Manager.
+The central entity types are \texttt{guest}, \texttt{room},
+\texttt{room\_category}, \texttt{booking}, \texttt{service} and
+\texttt{booking\_service}.
+
+Each guest is uniquely identified by a \texttt{guest\_id}. A guest can have
+zero or many bookings, while every booking belongs to exactly one guest. Each
+room is uniquely identified by a \texttt{room\_id}. A room can occur in many
+bookings over time, while each booking refers to exactly one room.
+
+Every room belongs to exactly one room category. A room category can describe
+multiple rooms and stores shared information such as the category name,
+maximum capacity and price per night. This avoids storing the same category
+information repeatedly.
+
+A booking can include several optional services, such as breakfast, parking or
+late check-out. The same service can also be assigned to many different
+bookings. Therefore, \texttt{booking} and \texttt{service} have an N:M
+relationship. This relationship is resolved by the associative entity
+\texttt{booking\_service}, which stores the selected service and its quantity
+for a particular booking.
 
 % ============================================================
 \section{From model to schema}
 % ============================================================
 
-<<< Derive the relational schema. For each table give the columns, the primary
-key (underlined) and the foreign keys. >>>
+The ER model is transformed into the following relational schema. Each table
+contains a primary key, and foreign keys are used to maintain the relationships
+between the entities.
 
 \begin{itemize}
-  \item \texttt{<<<table>>>}(\underline{id}, <<<column>>>, \dots)
-  \item \texttt{<<<table>>>}(\underline{id}, \emph{<<<foreign\_key>>>}, \dots)
+
+\item \texttt{guest}(\underline{guest\_id}, first\_name, last\_name, email, phone)
+
+\item \texttt{room\_category}(\underline{category\_id}, name, capacity, price\_per\_night)
+
+\item \texttt{room}(\underline{room\_id}, room\_number, floor, active,
+\emph{category\_id})
+
+\item \texttt{booking}(\underline{booking\_id}, check\_in, check\_out,
+status, \emph{guest\_id}, \emph{room\_id})
+
+\item \texttt{service}(\underline{service\_id}, name, price)
+
+\item \texttt{booking\_service}(\underline{booking\_id},
+\underline{service\_id}, quantity)
+
 \end{itemize}
 
-\textbf{Normalisation.} <<< One or two sentences: why is the schema free of
-redundancy (at least 3NF)? >>>
+\textbf{Normalisation.}
 
+The database schema satisfies the Third Normal Form (3NF). Each table stores
+information about exactly one entity, and all non-key attributes depend only on
+the primary key. Repeated information, such as room categories and hotel
+services, is stored only once and referenced through foreign keys, reducing
+redundancy and improving data consistency.
 % ============================================================
 \section{API design}
 % ============================================================
 
-<<< List the planned FastAPI endpoints. Mark where a JOIN / an aggregation
-sits, and which endpoints require the X-API-Key. >>>
+The backend of the Hotel Booking Manager is implemented using FastAPI and
+provides REST endpoints for managing guests, rooms, bookings and services.
+Read operations are available without authentication, while all endpoints that
+modify data require a valid X-API-Key.
+
+Some endpoints perform SQL JOIN operations to combine data from multiple
+tables. An aggregation endpoint is included to calculate booking statistics.
 
 \renewcommand{\arraystretch}{1.2}
-\begin{tabularx}{\linewidth}{@{}p{2cm}p{4cm}X@{}}
+
+\begin{tabularx}{\linewidth}{@{}p{2cm}p{5cm}X@{}}
 \toprule
 \textbf{Method} & \textbf{Path} & \textbf{Purpose} \\
 \midrule
-\texttt{GET}  & \texttt{/<<<…>>>} & <<< reads … (JOIN / aggregation) >>> \\
-\texttt{POST} & \texttt{/<<<…>>>} & <<< creates … (requires X-API-Key) >>> \\
+
+\texttt{GET}
+&
+\texttt{/rooms}
+&
+Returns all hotel rooms together with their room category (JOIN). \\
+
+\texttt{GET}
+&
+\texttt{/bookings}
+&
+Returns all bookings including guest and room information (JOIN). \\
+
+\texttt{GET}
+&
+\texttt{/statistics/bookings}
+&
+Returns the total number of bookings and occupied rooms (aggregation). \\
+
+\texttt{POST}
+&
+\texttt{/bookings}
+&
+Creates a new booking (requires X-API-Key). \\
+
+\texttt{PATCH}
+&
+\texttt{/bookings/\{id\}}
+&
+Updates an existing booking (requires X-API-Key). \\
+
+\texttt{POST}
+&
+\texttt{/services}
+&
+Creates a new hotel service (requires X-API-Key). \\
+
 \bottomrule
 \end{tabularx}
 
@@ -107,11 +206,15 @@ sits, and which endpoints require the X-API-Key. >>>
 \section{Frontend prototype (hand sketches)}
 % ============================================================
 
-<<< Describe what the frontend looks like and which endpoints it operates, and
-document a prototypical frontend with hand-drawn sketches -- one per screen/form.
-Python/tkinter is recommended; if you use something else, say what and why. The
-frontend is delivered as a .deb installer and asks for the API URL and X-API-Key
-in a connection dialog at startup. >>>
+The frontend will be implemented as a desktop application using Python and
+tkinter. It provides a simple and user-friendly interface for hotel reception
+staff to manage guests, rooms, bookings and additional services.
+
+When the application starts, the user enters the API URL and the X-API-Key in
+a connection dialog. After a successful connection, the main screen displays
+the available rooms and current bookings. Additional forms allow the user to
+create new bookings, edit existing reservations and view booking details. The
+frontend communicates with the FastAPI backend using REST requests.
 
 % Each \includegraphics below still points at the dummy example-figure.jpg.
 % Swap in your own file per screen, e.g. {fe-connect.jpg}, and keep the \captionof.
@@ -119,12 +222,12 @@ in a connection dialog at startup. >>>
 \centering
 \begin{minipage}[t]{0.47\linewidth}\centering
   \includegraphics[width=\linewidth]{example-figure.jpg}
-  \captionof{figure}{Startup connection dialog: API URL + X-API-Key.}
+  \captionof{figure}{Startup connection dialog for entering the API URL and X-API-Key.}
   \label{fig:fe-connect}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.47\linewidth}\centering
   \includegraphics[width=\linewidth]{example-figure.jpg}
-  \captionof{figure}{Main screen: <<< list/table, calls \texttt{GET /<<<…>>>} >>>.}
+  \captionof{figure}{Main screen displaying hotel rooms and current bookings using \texttt{GET /bookings}.}
   \label{fig:fe-main}
 \end{minipage}
 
@@ -132,76 +235,152 @@ in a connection dialog at startup. >>>
 
 \begin{minipage}[t]{0.47\linewidth}\centering
   \includegraphics[width=\linewidth]{example-figure.jpg}
-  \captionof{figure}{Detail form: <<< create/edit, calls \texttt{POST /<<<…>>>} >>>.}
+  \captionof{figure}{Booking form for creating a new reservation using \texttt{POST /bookings}.}
   \label{fig:fe-detail}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.47\linewidth}\centering
   \includegraphics[width=\linewidth]{example-figure.jpg}
-  \captionof{figure}{<<< Second feature screen and the endpoint it calls >>>.}
+  \captionof{figure}{Booking details screen for updating reservations using \texttt{PATCH /bookings/\{id\}}.}
   \label{fig:fe-second}
 \end{minipage}
 \end{figure}
 
-Figures~\ref{fig:fe-connect}--\ref{fig:fe-second} show the four screens of the
-prototype. Figure~\ref{fig:fe-connect} shows <<< the connection dialog that
-collects the API URL and X-API-Key at startup >>>; Figure~\ref{fig:fe-main}
-shows <<< the main screen and the endpoint it reads from >>>;
-Figure~\ref{fig:fe-detail} shows <<< the form used to create/edit a record and
-the write endpoint it calls >>>; and Figure~\ref{fig:fe-second} shows <<< the
-remaining screen >>>.
+Figures~\ref{fig:fe-connect}--\ref{fig:fe-second} illustrate the planned user
+interface of the Hotel Booking Manager.
+
+Figure~\ref{fig:fe-connect} shows the startup connection dialog where the user
+enters the API URL and the X-API-Key before accessing the system.
+Figure~\ref{fig:fe-main} shows the main screen, where reception staff can view
+hotel rooms and current bookings retrieved from the backend using the
+\texttt{GET /bookings} endpoint.
+
+Figure~\ref{fig:fe-detail} presents the booking form, which is used to create
+new reservations by sending data to the \texttt{POST /bookings} endpoint.
+Finally, Figure~\ref{fig:fe-second} shows the booking details screen, where
+existing reservations can be updated using the
+\texttt{PATCH /bookings/\{id\}} endpoint.
 
 % ============================================================
 \section{Operation with Docker Compose}
 % ============================================================
 
-<<< Which services run in your docker-compose.yml (at least postgres and api)?
-Where do the credentials live (.env)? How is the backend deployed on the
-lecture server? >>>
+The application is deployed using Docker Compose. The system consists of two
+main services: a PostgreSQL database and a FastAPI backend. Docker Compose
+starts both containers and automatically connects them through a shared Docker
+network.
+
+The PostgreSQL container stores all application data, including guests, rooms,
+bookings and hotel services. The FastAPI container provides the REST API and
+communicates directly with the database.
+
+Configuration values such as the database username, password, database name and
+API settings are stored in a separate \texttt{.env} file. This keeps sensitive
+information outside the application source code and allows different
+configurations for development and deployment.
+
+The backend is deployed on the lecture server as a Docker Compose application.
+After uploading the project files, the services can be started with
+\texttt{docker compose up -d}. The frontend connects to the backend by using
+the configured API URL and a valid X-API-Key.
 
 % ============================================================
 \section{Scope, milestones and risks}
 % ============================================================
 
-\textbf{Scope.} <<< How many tables and endpoints? >>>
+\textbf{Scope.}
+
+The project consists of six database tables and six REST API endpoints.
+The database manages guests, rooms, room categories, bookings, hotel services
+and the relationship between bookings and services. The API supports reading,
+creating and updating booking information.
 
 \textbf{Milestones and schedule.} <<< Fill in the week and the estimated hours;
 the hours should add up to roughly 40. >>>
 
 \renewcommand{\arraystretch}{1.2}
+
 \begin{tabularx}{\linewidth}{@{}p{1.4cm}Xp{1.8cm}@{}}
 \toprule
 \textbf{Week} & \textbf{Milestone} & \textbf{Est. hours} \\
 \midrule
-<<<1>>>   & <<< e.g. schema + seed data ready >>>                        & <<<8>>> \\
-<<<2--3>>> & <<< e.g. API reading/writing, protected by X-API-Key >>>   & <<<12>>> \\
-<<<4--5>>> & <<< e.g. frontend operates the core endpoints, .deb >>>    & <<<10>>> \\
-<<<6>>>   & <<< e.g. tests + documentation + video >>>                  & <<<10>>> \\
+
+1 &
+Design the database schema, create the ER model and implement PostgreSQL tables.
+&
+8 \\
+
+2--3 &
+Implement the FastAPI backend, database queries and X-API-Key authentication.
+&
+12 \\
+
+4--5 &
+Develop the tkinter frontend and connect it to the REST API.
+&
+10 \\
+
+6 &
+Testing, documentation, Docker deployment and project video.
+&
+10 \\
+
 \bottomrule
 \end{tabularx}
 
-\textbf{Risks.} <<< One or two risks that could make the project fail. >>>
+\textbf{Risks.}
+
+One possible risk is incorrect handling of overlapping room bookings, which
+could result in the same room being reserved for multiple guests at the same
+time. Another risk is communication problems between the frontend, backend and
+database during deployment with Docker Compose.
 
 % ============================================================
 \section{Acceptance criteria and testing}
 % ============================================================
 
-<<< State when your system counts as ``done and correct'', and how you prove it.
-Formulate each criterion as a checkable statement, then name the test that backs
-it. Turn the risk above into at least one concrete test case. >>>
+The project is considered complete when the database, backend and frontend
+work together correctly. The following acceptance criteria define the expected
+functionality of the system.
 
-\textbf{Acceptance criteria.} <<< Checkable statements about the finished system. >>>
+\textbf{Acceptance criteria.}
+
 \begin{itemize}[topsep=2pt]
-  \item <<< e.g. A record that violates a constraint is rejected (API returns 4xx). >>>
-  \item <<< e.g. GET /<<<…>>> returns the correct aggregated value (JOIN + aggregation). >>>
-  \item <<< e.g. Write endpoints without a valid X-API-Key are refused (401/403). >>>
+    \item A new booking can only be created if the selected guest and room
+    exist in the database.
+    
+    \item The system prevents overlapping bookings for the same room during the
+    same period.
+    
+    \item The booking overview correctly displays booking, guest and room
+    information using SQL JOIN operations.
+    
+    \item The booking statistics endpoint returns the correct total number of
+    bookings.
+    
+    \item All endpoints that modify data require a valid X-API-Key. Requests
+    without a valid key are rejected with an authentication error.
 \end{itemize}
 
-\textbf{Test plan.} <<< What you test and with which tools. A short list is enough. >>>
+\textbf{Test plan.}
+
 \begin{itemize}[topsep=2pt]
-  \item \textbf{Database:} <<< which constraints (PK/FK/UNIQUE/NOT NULL) you verify. >>>
-  \item \textbf{API:} <<< endpoint tests, happy path + error cases, e.g. with
-        \texttt{pytest} and FastAPI's \texttt{TestClient} against a test database (L 08). >>>
-  \item \textbf{Business rule:} <<< the test that covers the risk named above. >>>
+
+\item \textbf{Database:}
+Verify all primary keys, foreign keys, NOT NULL constraints and UNIQUE
+constraints by inserting both valid and invalid test data.
+
+\item \textbf{API:}
+Test every REST endpoint using FastAPI's TestClient. Verify successful
+requests as well as invalid input, missing resources and unauthorized access.
+
+\item \textbf{Business rule:}
+Test that the application rejects overlapping bookings for the same room and
+time period while allowing bookings for different rooms.
+
+\item \textbf{Frontend:}
+Verify that the desktop application can connect to the API, display booking
+information correctly and create new bookings successfully.
+
 \end{itemize}
 
 \vspace{1em}
@@ -210,5 +389,3 @@ it. Turn the risk above into at least one concrete test case. >>>
 should fit into roughly \textbf{40\,h of work} over at most \textbf{2 months}.
 Keep your scope within that budget.
 \end{infobox}
-
-\end{document}
