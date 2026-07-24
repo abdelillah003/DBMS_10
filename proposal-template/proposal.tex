@@ -82,7 +82,7 @@ and update the booking status when the guest checks in or checks out.
   \centering
   % Swap example-figure.jpg for your own file, e.g. er-sketch.jpg
   % (a photographed hand drawing is fine).
-  \includegraphics[width=0.85\linewidth]{er-sketch.jpg}
+  \includegraphics[width=0.85\linewidth]{ERdraft.png}
   \caption{ER sketch of the Hotel Booking Manager data model, showing the
    central entity types, their key attributes, relationships and cardinalities.}
   \label{fig:er}
@@ -187,11 +187,6 @@ Returns the total number of bookings and occupied rooms (aggregation). \\
 &
 Creates a new booking (requires X-API-Key). \\
 
-\texttt{PATCH}
-&
-\texttt{/bookings/\{id\}}
-&
-Updates an existing booking (requires X-API-Key). \\
 
 \texttt{POST}
 &
@@ -212,35 +207,33 @@ staff to manage guests, rooms, bookings and additional services.
 
 When the application starts, the user enters the API URL and the X-API-Key in
 a connection dialog. After a successful connection, the main screen displays
-the available rooms and current bookings. Additional forms allow the user to
-create new bookings, edit existing reservations and view booking details. The
-frontend communicates with the FastAPI backend using REST requests.
+the current bookings. Additional forms allow the user to create new bookings,
+inspect booking details and manage reservations. The frontend communicates
+with the FastAPI backend using REST requests.
 
-% Each \includegraphics below still points at the dummy example-figure.jpg.
-% Swap in your own file per screen, e.g. {fe-connect.jpg}, and keep the \captionof.
 \begin{figure}[ht]
 \centering
 \begin{minipage}[t]{0.47\linewidth}\centering
-  \includegraphics[width=\linewidth]{example-figure.jpg}
+  \includegraphics[width=\linewidth]{Connection.png}
   \captionof{figure}{Startup connection dialog for entering the API URL and X-API-Key.}
   \label{fig:fe-connect}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.47\linewidth}\centering
-  \includegraphics[width=\linewidth]{example-figure.jpg}
-  \captionof{figure}{Main screen displaying hotel rooms and current bookings using \texttt{GET /bookings}.}
+  \includegraphics[width=\linewidth]{Main.png}
+  \captionof{figure}{Main screen displaying current bookings retrieved using \texttt{GET /bookings}.}
   \label{fig:fe-main}
 \end{minipage}
 
 \vspace{1em}
 
 \begin{minipage}[t]{0.47\linewidth}\centering
-  \includegraphics[width=\linewidth]{example-figure.jpg}
+  \includegraphics[width=\linewidth]{Booking.png}
   \captionof{figure}{Booking form for creating a new reservation using \texttt{POST /bookings}.}
   \label{fig:fe-detail}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.47\linewidth}\centering
-  \includegraphics[width=\linewidth]{example-figure.jpg}
-  \captionof{figure}{Booking details screen for updating reservations using \texttt{PATCH /bookings/\{id\}}.}
+  \includegraphics[width=\linewidth]{Detail.png}
+  \captionof{figure}{Booking details screen displaying reservation information and associated services.}
   \label{fig:fe-second}
 \end{minipage}
 \end{figure}
@@ -250,15 +243,17 @@ interface of the Hotel Booking Manager.
 
 Figure~\ref{fig:fe-connect} shows the startup connection dialog where the user
 enters the API URL and the X-API-Key before accessing the system.
+
 Figure~\ref{fig:fe-main} shows the main screen, where reception staff can view
-hotel rooms and current bookings retrieved from the backend using the
+current bookings retrieved from the backend using the
 \texttt{GET /bookings} endpoint.
 
 Figure~\ref{fig:fe-detail} presents the booking form, which is used to create
-new reservations by sending data to the \texttt{POST /bookings} endpoint.
+new reservations by sending data to the
+\texttt{POST /bookings} endpoint.
+
 Finally, Figure~\ref{fig:fe-second} shows the booking details screen, where
-existing reservations can be updated using the
-\texttt{PATCH /bookings/\{id\}} endpoint.
+users can inspect reservation information and the associated hotel services.
 
 % ============================================================
 \section{Operation with Docker Compose}
@@ -289,13 +284,11 @@ the configured API URL and a valid X-API-Key.
 
 \textbf{Scope.}
 
-The project consists of six database tables and six REST API endpoints.
+The project consists of six database tables and five REST API endpoints.
 The database manages guests, rooms, room categories, bookings, hotel services
-and the relationship between bookings and services. The API supports reading,
-creating and updating booking information.
+and the relationship between bookings and services. The API supports reading and creating booking information.
 
-\textbf{Milestones and schedule.} <<< Fill in the week and the estimated hours;
-the hours should add up to roughly 40. >>>
+\textbf{Milestones and schedule.}
 
 \renewcommand{\arraystretch}{1.2}
 
