@@ -6,6 +6,7 @@ import json
 
 
 API_URL = "http://localhost:8003"
+API_KEY = "hotel-booking-key"
 
 
 def api_get(endpoint):
@@ -22,7 +23,10 @@ def api_post(endpoint, data):
     request = urllib.request.Request(
         url,
         data=request_data,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "X-API-Key": API_KEY
+        },
         method="POST"
     )
 
@@ -159,48 +163,28 @@ def show_main_menu():
         text="Rooms",
         width=28,
         command=show_rooms
-    ).grid(
-        row=0,
-        column=0,
-        padx=10,
-        pady=8
-    )
+    ).grid(row=0, column=0, padx=10, pady=8)
 
     ttk.Button(
         button_frame,
         text="Bookings",
         width=28,
         command=show_bookings
-    ).grid(
-        row=1,
-        column=0,
-        padx=10,
-        pady=8
-    )
+    ).grid(row=1, column=0, padx=10, pady=8)
 
     ttk.Button(
         button_frame,
         text="Statistics",
         width=28,
         command=show_statistics
-    ).grid(
-        row=2,
-        column=0,
-        padx=10,
-        pady=8
-    )
+    ).grid(row=2, column=0, padx=10, pady=8)
 
     ttk.Button(
         button_frame,
         text="Services",
         width=28,
         command=show_services
-    ).grid(
-        row=3,
-        column=0,
-        padx=10,
-        pady=8
-    )
+    ).grid(row=3, column=0, padx=10, pady=8)
 
     ttk.Separator(
         button_frame,
@@ -217,12 +201,7 @@ def show_main_menu():
         text="Disconnect",
         width=28,
         command=show_connection_view
-    ).grid(
-        row=5,
-        column=0,
-        padx=10,
-        pady=8
-    )
+    ).grid(row=5, column=0, padx=10, pady=8)
 
 
 def show_rooms():
@@ -243,6 +222,7 @@ def show_rooms():
         table = ttk.Treeview(
             table_frame,
             columns=(
+                "room_id",
                 "room",
                 "floor",
                 "category",
@@ -253,23 +233,26 @@ def show_rooms():
             height=12
         )
 
+        table.heading("room_id", text="ID")
         table.heading("room", text="Room")
         table.heading("floor", text="Floor")
         table.heading("category", text="Category")
         table.heading("capacity", text="Capacity")
         table.heading("price", text="Price / Night")
 
-        table.column("room", width=100, anchor="center")
-        table.column("floor", width=80, anchor="center")
-        table.column("category", width=140, anchor="center")
-        table.column("capacity", width=100, anchor="center")
-        table.column("price", width=120, anchor="center")
+        table.column("room_id", width=60, anchor="center")
+        table.column("room", width=90, anchor="center")
+        table.column("floor", width=70, anchor="center")
+        table.column("category", width=130, anchor="center")
+        table.column("capacity", width=90, anchor="center")
+        table.column("price", width=110, anchor="center")
 
         for room in rooms:
             table.insert(
                 "",
                 "end",
                 values=(
+                    room["room_id"],
                     room["room_number"],
                     room["floor"],
                     room["category"],
@@ -294,22 +277,14 @@ def show_rooms():
         text="Refresh",
         command=show_rooms,
         width=18
-    ).grid(
-        row=0,
-        column=0,
-        padx=5
-    )
+    ).grid(row=0, column=0, padx=5)
 
     ttk.Button(
         button_frame,
         text="Back to Main Menu",
         command=show_main_menu,
         width=18
-    ).grid(
-        row=0,
-        column=1,
-        padx=5
-    )
+    ).grid(row=0, column=1, padx=5)
 
 
 def show_bookings():
@@ -395,33 +370,21 @@ def show_bookings():
         text="Create Booking",
         command=show_create_booking,
         width=18
-    ).grid(
-        row=0,
-        column=0,
-        padx=5
-    )
+    ).grid(row=0, column=0, padx=5)
 
     ttk.Button(
         button_frame,
         text="Refresh",
         command=show_bookings,
         width=18
-    ).grid(
-        row=0,
-        column=1,
-        padx=5
-    )
+    ).grid(row=0, column=1, padx=5)
 
     ttk.Button(
         button_frame,
         text="Back to Main Menu",
         command=show_main_menu,
         width=18
-    ).grid(
-        row=0,
-        column=2,
-        padx=5
-    )
+    ).grid(row=0, column=2, padx=5)
 
 
 def show_create_booking():
@@ -444,90 +407,34 @@ def show_create_booking():
     ttk.Label(
         form,
         text="Guest ID:"
-    ).grid(
-        row=0,
-        column=0,
-        padx=10,
-        pady=8,
-        sticky="w"
-    )
+    ).grid(row=0, column=0, padx=10, pady=8, sticky="w")
 
-    guest_entry = ttk.Entry(
-        form,
-        width=28
-    )
-    guest_entry.grid(
-        row=0,
-        column=1,
-        padx=10,
-        pady=8
-    )
+    guest_entry = ttk.Entry(form, width=28)
+    guest_entry.grid(row=0, column=1, padx=10, pady=8)
 
     ttk.Label(
         form,
         text="Room ID:"
-    ).grid(
-        row=1,
-        column=0,
-        padx=10,
-        pady=8,
-        sticky="w"
-    )
+    ).grid(row=1, column=0, padx=10, pady=8, sticky="w")
 
-    room_entry = ttk.Entry(
-        form,
-        width=28
-    )
-    room_entry.grid(
-        row=1,
-        column=1,
-        padx=10,
-        pady=8
-    )
+    room_entry = ttk.Entry(form, width=28)
+    room_entry.grid(row=1, column=1, padx=10, pady=8)
 
     ttk.Label(
         form,
         text="Check-In (YYYY-MM-DD):"
-    ).grid(
-        row=2,
-        column=0,
-        padx=10,
-        pady=8,
-        sticky="w"
-    )
+    ).grid(row=2, column=0, padx=10, pady=8, sticky="w")
 
-    check_in_entry = ttk.Entry(
-        form,
-        width=28
-    )
-    check_in_entry.grid(
-        row=2,
-        column=1,
-        padx=10,
-        pady=8
-    )
+    check_in_entry = ttk.Entry(form, width=28)
+    check_in_entry.grid(row=2, column=1, padx=10, pady=8)
 
     ttk.Label(
         form,
         text="Check-Out (YYYY-MM-DD):"
-    ).grid(
-        row=3,
-        column=0,
-        padx=10,
-        pady=8,
-        sticky="w"
-    )
+    ).grid(row=3, column=0, padx=10, pady=8, sticky="w")
 
-    check_out_entry = ttk.Entry(
-        form,
-        width=28
-    )
-    check_out_entry.grid(
-        row=3,
-        column=1,
-        padx=10,
-        pady=8
-    )
+    check_out_entry = ttk.Entry(form, width=28)
+    check_out_entry.grid(row=3, column=1, padx=10, pady=8)
 
     def create_booking():
         guest_text = guest_entry.get().strip()
@@ -677,22 +584,14 @@ def show_statistics():
         text="Refresh",
         command=show_statistics,
         width=18
-    ).grid(
-        row=0,
-        column=0,
-        padx=5
-    )
+    ).grid(row=0, column=0, padx=5)
 
     ttk.Button(
         button_frame,
         text="Back to Main Menu",
         command=show_main_menu,
         width=18
-    ).grid(
-        row=0,
-        column=1,
-        padx=5
-    )
+    ).grid(row=0, column=1, padx=5)
 
 
 def show_services():
@@ -709,55 +608,24 @@ def show_services():
         text="Create a new hotel service"
     ).pack(pady=(0, 15))
 
-    form_frame = ttk.Frame(
-        root,
-        padding=20
-    )
+    form_frame = ttk.Frame(root, padding=20)
     form_frame.pack()
 
     ttk.Label(
         form_frame,
         text="Service Name:"
-    ).grid(
-        row=0,
-        column=0,
-        padx=10,
-        pady=10,
-        sticky="w"
-    )
+    ).grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-    name_entry = ttk.Entry(
-        form_frame,
-        width=30
-    )
-    name_entry.grid(
-        row=0,
-        column=1,
-        padx=10,
-        pady=10
-    )
+    name_entry = ttk.Entry(form_frame, width=30)
+    name_entry.grid(row=0, column=1, padx=10, pady=10)
 
     ttk.Label(
         form_frame,
         text="Price:"
-    ).grid(
-        row=1,
-        column=0,
-        padx=10,
-        pady=10,
-        sticky="w"
-    )
+    ).grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
-    price_entry = ttk.Entry(
-        form_frame,
-        width=30
-    )
-    price_entry.grid(
-        row=1,
-        column=1,
-        padx=10,
-        pady=10
-    )
+    price_entry = ttk.Entry(form_frame, width=30)
+    price_entry.grid(row=1, column=1, padx=10, pady=10)
 
     def create_service():
         name = name_entry.get().strip()
@@ -832,7 +700,6 @@ def show_services():
 
 
 root = tk.Tk()
-
 root.title("Hotel Booking Manager")
 root.geometry("800x560")
 root.resizable(False, False)
