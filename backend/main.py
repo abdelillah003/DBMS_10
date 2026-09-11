@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Header
+import os
 import psycopg
 from psycopg.rows import dict_row
 from pydantic import BaseModel
@@ -24,7 +25,11 @@ class ServiceCreate(BaseModel):
 
 def get_connection():
     return psycopg.connect(
-        dbname="hotel_booking_ataleb",
+        host=os.getenv("DB_HOST", "localhost"),
+        port=os.getenv("DB_PORT", "5432"),
+        dbname=os.getenv("DB_NAME", "hotel_booking_ataleb"),
+        user=os.getenv("DB_USER", "ataleb"),
+        password=os.getenv("DB_PASSWORD", ""),
         row_factory=dict_row
     )
 
