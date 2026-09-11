@@ -1,33 +1,43 @@
 # Hotel Booking Manager
 
-Hotel Booking Manager is a database-backed desktop application for managing room reservations in a small hotel.
+Hotel Booking Manager is a DBMS term project for managing hotel rooms, guests, bookings, and additional services.
 
-The project was developed as a term project for the course **Introduction to Database Management Systems** at THGA Bochum.
+The project consists of:
+
+- PostgreSQL database
+- FastAPI REST API
+- Tkinter desktop frontend
+- Docker Compose deployment for PostgreSQL and FastAPI
+- Debian package (`.deb`) for the frontend
 
 ## Features
 
-The application provides the following functionality:
+The application supports:
 
-- Display hotel rooms and room categories
-- Display existing bookings with guest and room information
-- Create new bookings
-- Prevent overlapping bookings for the same room
-- Display booking statistics
-- Create additional hotel services
-- Protect write operations with an X-API-Key
-- Desktop user interface for interacting with the REST API
+- Displaying hotel rooms
+- Displaying bookings
+- Creating new bookings
+- Displaying booking statistics
+- Creating additional services
+- Preventing overlapping bookings for the same room
+- API authentication using `X-API-Key`
 
 ## Technology Stack
 
-- **Database:** PostgreSQL
-- **Backend:** Python, FastAPI
-- **Database Driver:** psycopg
-- **Frontend:** Python, Tkinter
-- **API Documentation:** Swagger / OpenAPI
+- PostgreSQL
+- Python
+- FastAPI
+- Psycopg
+- Tkinter
+- Docker
+- Docker Compose
+- Debian packaging
 
-## Database
+## Database Design
 
-The relational database contains the following tables:
+The database is normalized to Third Normal Form (3NF).
+
+Tables:
 
 - `guest`
 - `room_category`
@@ -36,162 +46,229 @@ The relational database contains the following tables:
 - `service`
 - `booking_service`
 
-The schema is designed in **Third Normal Form (3NF)**.
+The `booking_service` table implements the N:M relationship between bookings and services.
 
-Primary keys and foreign keys are used to maintain referential integrity.
+Database files:
 
-An exclusion constraint prevents overlapping bookings for the same room and time period.
+- `database/schema.sql`
+- `database/seed.sql`
 
-Database files are located in:
-
-```text
-database/schema.sql
-database/seed.sql
-```
+The database also contains an exclusion constraint that prevents overlapping active bookings for the same room.
 
 ## REST API
 
-The FastAPI backend provides the following project endpoints:
+The FastAPI backend provides the following main endpoints:
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/rooms` | Returns rooms together with room category information |
-| GET | `/bookings` | Returns bookings together with guest and room information |
-| GET | `/statistics/bookings` | Returns aggregated booking statistics |
-| POST | `/bookings` | Creates a new booking |
-| POST | `/services` | Creates a new hotel service |
+| GET | `/rooms` | List all rooms |
+| GET | `/bookings` | List all bookings |
+| GET | `/statistics/bookings` | Show booking statistics |
+| POST | `/bookings` | Create a booking |
+| POST | `/services` | Create a service |
 
-The API also provides the root endpoint `/` as a simple health check.
-
-## API Authentication
-
-Write operations require the HTTP header:
-
-```text
-X-API-Key: hotel-booking-key
-```
-
-The protected endpoints are:
-
-```text
-POST /bookings
-POST /services
-```
-
-Requests without the correct API key return HTTP status `401 Unauthorized`.
-
-## Booking Validation
-
-When a booking is created, the backend validates the request.
-
-Examples:
-
-- Check-out must be after check-in.
-- Guest and room must exist.
-- A room cannot have overlapping bookings.
-
-An overlapping booking returns:
-
-```text
-409 Conflict
-Room is already booked for this period
-```
-
-## Service Validation
-
-When a service is created:
-
-- The price must not be negative.
-- The service name must be unique.
-
-Duplicate service names return HTTP status `409 Conflict`.
-
-## Running the Backend
-
-Create and activate a Python virtual environment and install the required Python packages.
-
-The backend can then be started with:
-
-```bash
-python3 -m uvicorn backend.main:app --host 0.0.0.0 --port 8003
-```
-
-The API documentation is available at:
+The API documentation is available through Swagger UI at:
 
 ```text
 http://localhost:8003/docs
 ```
 
-## Running the Frontend
+## API Authentication
 
-The frontend is located in:
+Write operations are protected with an `X-API-Key`.
+
+Protected endpoints:
+
+- `POST /bookings`
+- `POST /services`
+
+The API key is configured through the `.env` file and is not stored in the Git repository.
+
+Example request header:
 
 ```text
-frontend/main.py
+X-API-Key: <your-api-key>
 ```
 
-Start it with:
+Requests without a valid API key return HTTP `401 Unauthorized`.
+
+## Environment Configuration
+
+Create a `.env` file in the project root.
+
+Example:
+
+```text
+POSTGRES_DB=hotel_booking_ataleb
+POSTGRES_USER=hotel_booking
+POSTGRES_PASSWORD=<your-database-password>
+API_KEY=<your-api-key>
+```
+
+The `.env` file is ignored by Git and must not be committed.
+
+## Docker Compose Deployment
+
+PostgreSQL and the FastAPI backend are started with Docker Compose.
+
+From the project directory run:
 
 ```bash
-python frontend/main.py
+docker compose up -d --build
 ```
 
-The desktop application connects to:
+Check the containers with:
+
+```bash
+docker compose ps
+```
+
+The PostgreSQL container initializes the database using:
+
+- `database/schema.sql`
+- `database/seed.sql`
+
+The FastAPI backend is available on port `8003`.
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
+## Frontend
+
+The desktop frontend is implemented with Python and Tkinter.
+
+At startup, the connection dialog asks for:
+
+- API URL
+- X-API-Key
+
+For a local connection to the API:
 
 ```text
-http://localhost:8003
+API URL: http://localhost:8003
 ```
 
-If the backend runs on a remote server, an SSH tunnel can be used to forward port `8003` to the local computer.
+The frontend communicates exclusively with the REST API and does not access PostgreSQL directly.
 
-## Frontend Views
+## Debian Package
 
-The desktop application contains the following views:
+The frontend is packaged as a Debian `.deb` package.
 
-- Connection
-- Main Menu
-- Rooms
-- Bookings
-- Create Booking
-- Booking Statistics
-- Add Service
+The generated package is:
 
-The Rooms view also displays the database Room ID so that the correct room can be selected when creating a booking.
+```text
+dist/hotel-booking-manager_1.0.0_all.deb
+```
+
+Build the package with:
+
+```bash
+mkdir -p dist
+dpkg-deb --build packaging/hotel-booking-manager dist/hotel-booking-manager_1.0.0_all.deb
+```
+
+Inspect the package with:
+
+```bash
+dpkg-deb --info dist/hotel-booking-manager_1.0.0_all.deb
+dpkg-deb --contents dist/hotel-booking-manager_1.0.0_all.deb
+```
+
+The package depends on:
+
+- `python3`
+- `python3-tk`
+
+On a Debian system with administrator privileges, install it with:
+
+```bash
+sudo dpkg -i dist/hotel-booking-manager_1.0.0_all.deb
+```
+
+After installation, start the frontend with:
+
+```bash
+hotel-booking-manager
+```
+
+## Validation and Business Rules
+
+### Booking validation
+
+A booking requires:
+
+```text
+check_out > check_in
+```
+
+Invalid date ranges return HTTP `400 Bad Request`.
+
+Overlapping active bookings for the same room are prevented by a PostgreSQL exclusion constraint.
+
+An overlap returns HTTP `409 Conflict`.
+
+### Service validation
+
+Service prices must be non-negative.
+
+Duplicate service names return HTTP `409 Conflict`.
 
 ## Project Structure
 
 ```text
 DBMS_10/
 ├── backend/
-│   └── main.py
+│   ├── Dockerfile
+│   ├── main.py
+│   └── requirements.txt
 ├── database/
 │   ├── schema.sql
 │   └── seed.sql
 ├── frontend/
 │   └── main.py
-├── proposal-template/
-├── src/
+├── packaging/
+│   └── hotel-booking-manager/
+├── dist/
+│   └── hotel-booking-manager_1.0.0_all.deb
+├── build/
+├── compose.yaml
+├── Makefile
 ├── README.md
-└── Makefile
+└── .gitignore
 ```
 
-## Tested Behaviour
+## Tested Behavior
 
-The implementation was tested for:
+The implementation has been tested for:
 
-- Database connectivity
-- Reading rooms
-- Reading bookings
-- Booking statistics
-- Creating valid bookings
-- Rejecting overlapping bookings
-- Rejecting invalid booking dates
-- Creating hotel services
-- Rejecting duplicate service names
-- Rejecting write requests without an X-API-Key
-- Accepting write requests with the correct X-API-Key
-- Frontend communication with the FastAPI backend
+- Docker Compose startup
+- PostgreSQL health check
+- Reading rooms through the API
+- Creating bookings
+- Creating services
+- API-key authentication
+- HTTP `401` for missing API key
+- HTTP `409` for overlapping bookings
+- Booking date validation
+- Database foreign-key validation
+- Debian package creation and inspection
 
 ## Project Scope
 
-The implementation follows the REST API scope defined in the project proposal. The five main project endpoints are implemented together with the PostgreSQL database and Tkinter desktop frontend.
+This project demonstrates:
+
+- Relational database design
+- Third Normal Form (3NF)
+- Primary and foreign keys
+- N:M relationships
+- SQL constraints
+- JOIN queries
+- Aggregate queries
+- REST API design
+- API authentication
+- Docker-based deployment
+- Desktop frontend development
+- Debian package creation
