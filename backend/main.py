@@ -8,7 +8,7 @@ from datetime import date
 
 app = FastAPI(title="Hotel Booking Manager API")
 
-API_KEY = "hotel-booking-key"
+API_KEY = os.getenv("API_KEY", "hotel-booking-key")
 
 
 class BookingCreate(BaseModel):
