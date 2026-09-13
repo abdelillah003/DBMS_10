@@ -103,23 +103,23 @@ def get_booking_statistics():
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT
-                    COUNT(*) AS total_bookings,
+                    COUNT(*) AS total,
 
                     COUNT(*) FILTER (
                         WHERE status = 'confirmed'
-                    ) AS confirmed_bookings,
+                    ) AS confirmed,
 
                     COUNT(*) FILTER (
                         WHERE status = 'checked_in'
-                    ) AS checked_in_bookings,
+                    ) AS checked_in,
 
                     COUNT(*) FILTER (
                         WHERE status = 'checked_out'
-                    ) AS checked_out_bookings,
+                    ) AS checked_out,
 
                     COUNT(*) FILTER (
                         WHERE status = 'cancelled'
-                    ) AS cancelled_bookings
+                    ) AS cancelled
 
                 FROM booking;
             """)
